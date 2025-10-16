@@ -1,0 +1,27 @@
+{
+  "name": "my-car",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.8",
+    "bootstrap-vue-next": "^0.40.5",
+    "jspdf": "^3.0.3",
+    "jspdf-autotable": "^5.0.2",
+    "jspdf-font": "^1.0.7",
+    "vue": "^3.5.21",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/tsconfig": "^0.8.1",
+    "typescript": "~5.8.3",
+    "vite": "^7.1.7",
+    "vue-tsc": "^3.0.7"
+  }
+}
