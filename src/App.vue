@@ -54,7 +54,10 @@
                   <b-button size="sm" variant="outline-light" class="me-2" @click="openAddModal(row.id)">
                     Добавить
                   </b-button>
-                  <b-button size="sm" variant="outline-danger" @click="removeById(row.id)">
+                  <b-button size="sm" variant="outline-warning" class="me-2" @click="openEditModal(row.refPart)">
+                    Изменить
+                  </b-button>
+                  <b-button size="sm" variant="outline-danger" @click="confirmRemove(row.id)">
                     Удалить
                   </b-button>
                 </td>
@@ -181,9 +184,6 @@ function recalcPartPrice(p: Part): number {
 }
 
 
-
-
-
 function recalcAll() {
   parts.value.forEach(p => recalcPartPrice(p))
 }
@@ -206,6 +206,59 @@ function openAddModal(parentId: number | null) {
   modal.value = { name: '', price: 0, quantity: 1, parentId }
   nextTick(() => (showModal.value = true))
 }
+
+
+const editMode = ref(false)
+const editingPartId = ref<number | null>(null)
+
+function openEditModal(part: Part) {
+  buildParentOptions()
+  modal.value = {
+    name: part.name,
+    price: part.price,
+    quantity: part.quantity,
+    parentId: findParentId(part.id)
+  }
+  editMode.value = true
+  editingPartId.value = part.id
+  showModal.value = true
+}
+
+function findParentId(childId: number): number | null {
+  function search(list: Part[], parentId: number | null): number | null {
+    for (const p of list) {
+      if (p.id === childId) return parentId
+      if (p.children) {
+        const found = search(p.children, p.id)
+        if (found !== null) return found
+      }
+    }
+    return null
+  }
+  return search(parts.value, null)
+}
+
+
+function updatePart(id: number) {
+  function traverse(list: Part[]) {
+    for (const p of list) {
+      if (p.id === id) {
+        p.name = modal.value.name
+        p.price = modal.value.price
+        p.quantity = modal.value.quantity
+        recalcPartPrice(p)
+        return true
+      }
+      if (p.children && traverse(p.children)) {
+        recalcPartPrice(p)
+        return true
+      }
+    }
+    return false
+  }
+  traverse(parts.value)
+}
+
 
 function resetModal() {
   showModal.value = false
@@ -283,14 +336,23 @@ function removeById(id: number) {
   }
 }
 
+function confirmRemove(id: number) {
+  if (confirm('Вы уверены, что хотите удалить эту деталь?')) {
+    removeById(id)
+  }
+}
 
 function confirmAdd() {
-  const newPart: Part = {
+  if (editMode.value && editingPartId.value !== null) {
+    updatePart(editingPartId.value)
+  } 
+  else {
+    const newPart: Part = {
     id: ++nextId,
     name: modal.value.name || 'Новая деталь',
     price: modal.value.price || 0,
     quantity: modal.value.quantity || 1
-  }
+    }
   const parentId = modal.value.parentId
   if (parentId == null) parts.value.push(newPart)
   else {
@@ -310,6 +372,7 @@ function confirmAdd() {
       return false
     }
     addTo(parts.value)
+  }
   }
   recalcAll()
   resetModal()
