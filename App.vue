@@ -80,12 +80,12 @@
         <form @submit.prevent="confirmAdd">
           <div class="mb-3">
             <label class="form-label">Название</label>
-            <b-form-input v-model="modal.name" required />
+            <b-form-input v-model="modal.name" required></b-form-input>
           </div>
 
           <div class="mb-3">
             <label class="form-label">Цена (число)</label>
-            <b-form-input type="number" min="0" v-model.number="modal.price" required />
+            <b-form-input type="number" min="0" v-model.number="modal.price" required></b-form-input>
             <div class="form-text">
               Если деталь имеет дочерние элементы, цена вычисляется автоматически.
             </div>
@@ -93,12 +93,12 @@
 
           <div class="mb-3">
             <label class="form-label">Количество</label>
-            <b-form-input type="number" min="1" v-model.number="modal.quantity" required />
+            <b-form-input type="number" min="1" v-model.number="modal.quantity" required></b-form-input>
           </div>
 
           <div class="mb-3">
             <label class="form-label">Родитель</label>
-            <b-form-select v-model="modal.parentId" :options="parentOptions" />
+            <b-form-select v-model="modal.parentId" :options="parentOptions"></b-form-select>
             <div class="form-text">Выберите родительскую деталь или оставьте "Корень".</div>
           </div>
 
@@ -246,6 +246,8 @@ function updatePart(id: number) {
         p.name = modal.value.name
         p.price = modal.value.price
         p.quantity = modal.value.quantity
+        ;(p as any).basePrice = modal.value.price
+        p.price = modal.value.price
         recalcPartPrice(p)
         return true
       }
@@ -263,6 +265,8 @@ function updatePart(id: number) {
 function resetModal() {
   showModal.value = false
   modal.value = { name: '', price: 0, quantity: 1, parentId: null }
+  editMode.value = false
+  editingPartId.value = null
 }
 
 function formatCurrency(v: number) {
