@@ -240,24 +240,58 @@ function findParentId(childId: number): number | null {
 
 
 function updatePart(id: number) {
-  function traverse(list: Part[]) {
+  function traverse(list: Part[], parent: Part | null): boolean {
     for (const p of list) {
       if (p.id === id) {
+
         p.name = modal.value.name
-        p.price = modal.value.price
         p.quantity = modal.value.quantity
-        recalcPartPrice(p)
+
+        if (!p.children?.length) {
+          (p as any).basePrice = modal.value.price
+          p.price = modal.value.price
+        }
+
+        if (modal.value.parentId !== findParentId(id)) {
+          
+          if (parent?.children) {
+            parent.children = parent.children.filter(c => c.id !== id)
+          } else {
+            const i = parts.value.findIndex(x => x.id === id)
+            if (i !== -1) parts.value.splice(i, 1)
+          }
+
+          const addTo = (list: Part[]): boolean => {
+            for (const pp of list) {
+              if (pp.id === modal.value.parentId) {
+                if (!pp.children) pp.children = []
+                pp.children.push(p)
+                return true
+              }
+              if (pp.children && addTo(pp.children)) return true
+            }
+            return false
+          }
+
+          if (modal.value.parentId === null) {
+            parts.value.push(p)
+          } else {
+            addTo(parts.value)
+          }
+        }
+
         return true
       }
-      if (p.children && traverse(p.children)) {
-        recalcPartPrice(p)
-        return true
-      }
+
+      if (p.children && traverse(p.children, p)) return true
     }
     return false
   }
-  traverse(parts.value)
+
+  traverse(parts.value, null)
+  recalcAll()
 }
+
 
 
 function resetModal() {
@@ -411,12 +445,12 @@ async function exportToPDF() {
 
     const doc = new jsPDF({ unit: 'pt', format: 'a4' })
 
-    const fontNormalUrl = '/fonts/Roboto-Regular.ttf'
+    const fontNormalUrl = './fonts/Roboto-Regular.ttf'
     const respNormal = await fetch(fontNormalUrl)
     if (!respNormal.ok) throw new Error('Не удалось загрузить Roboto-Regular.ttf')
     const base64Normal = arrayBufferToBase64(await respNormal.arrayBuffer())
 
-    const fontBoldUrl = '/fonts/Roboto-Bold.ttf'
+    const fontBoldUrl = './fonts/Roboto-Bold.ttf'
     const respBold = await fetch(fontBoldUrl)
     if (!respBold.ok) throw new Error('Не удалось загрузить Roboto-Bold.ttf')
     const base64Bold = arrayBufferToBase64(await respBold.arrayBuffer())
